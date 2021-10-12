@@ -22,12 +22,20 @@ module.exports.createCard = (req, res) => {
 };
 
 module.exports.deleteCard = (req, res) => {
-  Card.findOneAndRemove(req.params.cardId)
+  const { cardId } = req.params;
+  const ownerId = req.user._id;
+  Card.findById(cardId)
     .orFail(() => {
       throw new Error('NotFound');
     })
     .then((card) => {
-      res.send({ data: card });
+      if (ownerId.toString() === card.owner._id.toString()) {
+        Card.deleteOne(card).then(() => {
+          res.send({ data: card });
+        });
+      } else {
+        throw new Error('Недостаточно прав для удаления карточки');
+      }
     })
     .catch((err) => {
       if (err.message === 'NotFound') {
