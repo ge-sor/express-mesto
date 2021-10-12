@@ -34,12 +34,15 @@ module.exports.deleteCard = (req, res) => {
           res.send({ data: card });
         });
       } else {
-        throw new Error('Недостаточно прав для удаления карточки');
+        throw new Error('Forbidden');
       }
     })
     .catch((err) => {
       if (err.message === 'NotFound') {
         return res.status(404).send({ message: 'Карточка с указанным _id не найдена' });
+      }
+      if (err.message === 'Forbidden') {
+        return res.status(403).send({ message: 'Недостаточно прав для удаления карточки' });
       }
       if (err.name === 'CastError') {
         return res.status(400).send({ message: 'Переданы некорректные данные для удаления карточки' });
