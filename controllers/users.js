@@ -7,7 +7,7 @@ module.exports.getUsers = (req, res) => {
 };
 
 module.exports.getUser = (req, res) => {
-  User.findById(req.user._id)
+  User.findById(req.params._id)
     .orFail(() => {
       throw new Error('NotFound');
     })
@@ -17,6 +17,9 @@ module.exports.getUser = (req, res) => {
     .catch((err) => {
       if (err.message === 'NotFound') {
         return res.status(404).send({ message: 'Пользователь по указанному _id не найден' });
+      }
+      if (err.name === 'CastError') {
+        return res.status(400).send({ message: 'Переданы некорректные данные пользователя' });
       }
       return res.status(500).send({ message: 'Ошибка сервера' });
     });
@@ -54,7 +57,7 @@ module.exports.updateUser = (req, res) => {
       if (err.name === 'ValidationError') {
         return res.status(400).send({ message: 'Переданы некорректные данные при обновлении профиля' });
       }
-      if (err.name === 'NotFound') {
+      if (err.message === 'NotFound') {
         return res.status(404).send({ message: 'Пользователь с указанным _id не найден' });
       }
       return res.status(500).send({ message: 'Ошибка сервера' });
@@ -79,7 +82,7 @@ module.exports.updateAvatar = (req, res) => {
       if (err.name === 'ValidationError') {
         return res.status(400).send({ message: 'Переданы некорректные данные при обновлении аватара' });
       }
-      if (err.name === 'NotFound') {
+      if (err.message === 'NotFound') {
         return res.status(404).send({ message: 'Пользователь с указанным _id не найден' });
       }
       return res.status(500).send({ message: 'Ошибка сервера' });
