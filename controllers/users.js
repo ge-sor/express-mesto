@@ -8,11 +8,14 @@ module.exports.getUsers = (req, res) => {
 
 module.exports.getUser = (req, res) => {
   User.findById(req.user._id)
+    .orFail(() => {
+      throw new Error('NotFound');
+    })
     .then((user) => {
       res.send(user);
     })
     .catch((err) => {
-      if (err.name === 'CastError') {
+      if (err.message === 'NotFound') {
         return res.status(404).send({ message: 'Пользователь по указанному _id не найден' });
       }
       return res.status(500).send({ message: 'Ошибка сервера' });
@@ -20,7 +23,8 @@ module.exports.getUser = (req, res) => {
 };
 
 module.exports.addUser = (req, res) => {
-  User.create(req.user)
+  const { name, about, avatar } = req.body;
+  User.create({ name, about, avatar })
     .then((user) => {
       res.send(user);
     })
@@ -40,6 +44,9 @@ module.exports.updateUser = (req, res) => {
     { name, about },
     { new: true, runValidators: true },
   )
+    .orFail(() => {
+      throw new Error('NotFound');
+    })
     .then((user) => {
       res.send({ data: user });
     })
@@ -47,7 +54,7 @@ module.exports.updateUser = (req, res) => {
       if (err.name === 'ValidationError') {
         return res.status(400).send({ message: 'Переданы некорректные данные при обновлении профиля' });
       }
-      if (err.name === 'CastError') {
+      if (err.name === 'NotFound') {
         return res.status(404).send({ message: 'Пользователь с указанным _id не найден' });
       }
       return res.status(500).send({ message: 'Ошибка сервера' });
@@ -62,6 +69,9 @@ module.exports.updateAvatar = (req, res) => {
     { avatar },
     { new: true, runValidators: true },
   )
+    .orFail(() => {
+      throw new Error('NotFound');
+    })
     .then((data) => {
       res.send({ data });
     })
@@ -69,7 +79,7 @@ module.exports.updateAvatar = (req, res) => {
       if (err.name === 'ValidationError') {
         return res.status(400).send({ message: 'Переданы некорректные данные при обновлении аватара' });
       }
-      if (err.name === 'CastError') {
+      if (err.name === 'NotFound') {
         return res.status(404).send({ message: 'Пользователь с указанным _id не найден' });
       }
       return res.status(500).send({ message: 'Ошибка сервера' });
