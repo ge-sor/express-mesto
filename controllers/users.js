@@ -1,5 +1,8 @@
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
 const User = require('../models/user');
 
+const { JWT_SECRET } = process.env;
 module.exports.getUsers = (req, res) => {
   User.find({})
     .then((users) => res.send({ data: users }))
@@ -25,18 +28,27 @@ module.exports.getUser = (req, res) => {
     });
 };
 
-module.exports.addUser = (req, res) => {
-  const { name, about, avatar } = req.body;
-  User.create({ name, about, avatar })
-    .then((user) => {
-      res.send(user);
+module.exports.createUser = (req, res) => {
+  const {
+    name, about, avatar, email, password,
+  } = req.body;
+  bcrypt.hash(password, 10).then((hash) => {
+    User.create({
+      name, about, avatar, email, password: hash,
     })
-    .catch((err) => {
-      if (err.name === 'ValidationError') {
-        return res.status(400).send({ message: 'Переданы некорректные данные при создании пользователя' });
-      }
-      return res.status(500).send({ message: 'Ошибка сервера' });
-    });
+      .then((user) => {
+        res.send(user);
+      })
+      .catch((err) => {
+        if (err.name === 'ValidationError') {
+          return res.status(400).send({ message: 'Переданы некорректные данные при создании пользователя' });
+        }
+        if (err.name === 'MongoError' && err.code === 11000) {
+          return res.status(409).send({ message: 'Пользователь уже существует' });
+        }
+        return res.status(500).send({ message: 'Ошибка сервера' });
+      });
+  });
 };
 
 module.exports.updateUser = (req, res) => {
@@ -84,6 +96,33 @@ module.exports.updateAvatar = (req, res) => {
       }
       if (err.message === 'NotFound') {
         return res.status(404).send({ message: 'Пользователь с указанным _id не найден' });
+      }
+      return res.status(500).send({ message: 'Ошибка сервера' });
+    });
+};
+
+module.exports.login = (req, res) => {
+  const { email, password } = req.body;
+  User.findOne({ email }).select('+password')
+    .orFail(() => {
+      throw new Error('NotFound');
+    })
+    .then((user) => {
+      bcrypt.compare(password, user.password)
+        .then((ok) => {
+          if (!ok) {
+            return res.status(400).send({ message: 'Неправильные почта или пароль' });
+          }
+          const token = jwt.sign({ _id: user._id }, JWT_SECRET, { expiresIn: '7d' });
+          res.send({ token });
+        });
+    })
+    .catch((err) => {
+      if (err.name === 'ValidationError') {
+        return res.status(400).send({ message: 'Переданы некорректные данные при обновлении профиля' });
+      }
+      if (err.message === 'NotFound') {
+        return res.status(404).send({ message: 'Пользователь с указанным email не найден' });
       }
       return res.status(500).send({ message: 'Ошибка сервера' });
     });

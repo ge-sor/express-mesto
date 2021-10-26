@@ -1,6 +1,13 @@
+require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
+
+const {
+  createUser,
+  login,
+} = require('./controllers/users');
+const auth = require('./middlewares/auth');
 
 const PORT = 3000;
 const app = express();
@@ -12,12 +19,11 @@ mongoose.connect('mongodb://localhost:27017/mestodb', {
   useNewUrlParser: true,
 });
 
-app.use((req, res, next) => {
-  req.user = {
-    _id: '616328e5080f458d4d4bd9ca',
-  };
-  next();
-});
+app.post('/signin', login);
+
+app.post('/signup', createUser);
+
+app.use(auth);
 
 app.use('/users', require('./routes/users'));
 
