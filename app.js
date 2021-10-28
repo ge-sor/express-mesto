@@ -63,6 +63,4 @@ app.use((err, req, res, next) => {
   next();
 });
 
-app.listen(PORT, () => {
-  console.log(`App on port ${PORT}`);
-});
+app.listen(PORT);
