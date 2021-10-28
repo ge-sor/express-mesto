@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-const { isEmail } = require('validator');
+const { isUrl, isEmail } = require('validator');
 
 const userSchema = new mongoose.Schema({
   name: {
@@ -17,10 +17,6 @@ const userSchema = new mongoose.Schema({
   avatar: {
     type: String,
     default: 'https://pictures.s3.yandex.net/resources/jacques-cousteau_1604399756.png',
-    validate: {
-      validator: (string) => /[-a-zA-Z0-9@:%._~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_.~#?&/=]*)?/gi.test(string),
-      message: 'Неверный формат ссылки на аватар',
-    },
   },
   email: {
     type: String,
