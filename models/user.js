@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-const { isUrl, isEmail } = require('validator');
+const { isEmail } = require('validator');
 
 const userSchema = new mongoose.Schema({
   name: {
