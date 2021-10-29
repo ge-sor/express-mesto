@@ -50,6 +50,9 @@ module.exports.updateUser = (req, res, next) => {
       throw new NotFoundError('Пользователь с указанным id не найден');
     })
     .then((user) => {
+      if (!user) {
+        throw new BadRequestError('Ошибка валидации');
+      }
       res.send({ data: user });
     })
     .catch((err) => next(err));
@@ -63,10 +66,10 @@ module.exports.updateAvatar = (req, res, next) => {
     { avatar },
     { new: true, runValidators: true },
   )
-    .orFail(() => {
-      throw new BadRequestError('Ошибка валидации');
-    })
     .then((data) => {
+      if (!data) {
+        throw new BadRequestError('Ошибка валидации');
+      }
       res.send({ data });
     })
     .catch((err) => next(err));
